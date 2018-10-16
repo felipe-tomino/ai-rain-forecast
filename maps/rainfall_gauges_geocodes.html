@@ -10,6 +10,19 @@
       #map {
         height: 100%;
       }
+      #legend {
+        font-family: Arial, sans-serif;
+        background: #fff;
+        padding: 10px;
+        margin: 10px;
+        border: 3px solid #000;
+      }
+      #legend h3 {
+        margin-top: 0;
+      }
+      #legend img {
+        vertical-align: middle;
+      }
       /* Optional: Makes the sample page fill the window. */
       html, body {
         height: 100%;
@@ -20,6 +33,7 @@
   </head>
   <body>
     <div id="map"></div>
+    <div id="legend"><h3>Legend</h3></div>
     <script>
 
       function initMap() {
@@ -277,32 +291,72 @@
         var infoWindow = new google.maps.InfoWindow();
         for (var i = 0; i < 81; i++) {
           var icon;
+          if (titles[i][2] >= 5000) {
+            icon = './blue-dot.png'
+          } else if (titles[i][2] > 2000 && titles[i][2] < 5000) {
+            icon = './yellow-dot.png'
+          } else {
+            icon = './red-dot.png'
+          }
+          if (Math.round(titles[i][4] * 100) > 50) {
+            icon = './green-dot.png'
+          }
+
           var data =  `<p><strong>Nome:</strong> ${titles[i][0]}</p>` +
                       `<p><strong>Código:</strong> ${titles[i][1]}</p>` +
                       `<p><strong>N de tweets:</strong> ${titles[i][2]}</p>` +
                       `<p><strong>N de tweets relacionados:</strong> ${titles[i][3]}</p>` +
                       `<p><strong>% de tweets relacionados:</strong> ${Math.round(titles[i][4] * 100) / 100}%</p>`
 
-
           var marker = new google.maps.Marker({
             position: myLatLng[i],
             map: map,
             title: titles[i][0] + ' (' + titles[i][1] + ')',
-
+            icon: icon
           });
 
           (function (marker, data) {
-                google.maps.event.addListener(marker, "click", function (e) {
-                    //Wrap the content inside an HTML DIV in order to set height and width of InfoWindow.
-                    infoWindow.setContent(data);
-                    infoWindow.open(map, marker);
-                });
-            })(marker, data);
+            google.maps.event.addListener(marker, "click", function (e) {
+              //Wrap the content inside an HTML DIV in order to set height and width of InfoWindow.
+              infoWindow.setContent(data);
+              infoWindow.open(map, marker);
+            });
+          })(marker, data);
         }
         var heatmap = new google.maps.visualization.HeatmapLayer({
           data: heatMapData
         });
         heatmap.setMap(map);
+        var icons = {
+          highF: {
+            name: '% de tweets relacionados >= 0.5%',
+            icon: './green-dot.png'
+          },
+          lowF: {
+            name: '% de tweets relacionados < 0.5%',
+            icon: './red-dot.png'
+          },
+          manyT: {
+            name: 'Num. de tweets >= 5000',
+            icon: './blue-dot.png'
+          },
+          avgT: {
+            name: '2000 < Num. de tweets < 5000',
+            icon: './yellow-dot.png'
+          }
+        };
+
+        var legend = document.getElementById('legend');
+        for (var key in icons) {
+          var type = icons[key];
+          var name = type.name;
+          var icon = type.icon;
+          var div = document.createElement('div');
+          div.innerHTML = '<img src="' + icon + '"> ' + name;
+          legend.appendChild(div);
+        }
+
+        map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(legend);
       }
     </script>
     <script async defer

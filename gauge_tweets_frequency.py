@@ -23,7 +23,7 @@ for gauge in gauges:
     # conta quantos tweets tem no sensor, e quantos sao relacionados
     tcnt = subset['gauge'].count()
     relatedcnt = subset.loc[subset['related'] == True]['related'].count()
-    tweetsCount[gauge] = [(str(gauge) + str(gauge_name)), tcnt, relatedcnt, 100.*float(relatedcnt)/float(tcnt)]
+    tweetsCount[gauge] = [str(gauge_name), str(gauge), tcnt, relatedcnt, (100.*float(relatedcnt)/float(tcnt))]
 
 tweetsCount
 
