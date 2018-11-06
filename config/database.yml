@@ -1,0 +1,12 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: 5
+  host: localhost
+  port: 5432
+  user: "postgres"
+  password: "postgres"
+
+development:
+  <<: *default
+  database: tcc_development
