@@ -1,4 +1,4 @@
-class CreateGaugesAndTweets < ActiveRecord::Migration[5.2]
+class CreateGaugesAndTweets < ActiveRecord::Migration
   def change
     create_table :gauges do |t|
       t.string :cod
@@ -7,16 +7,12 @@ class CreateGaugesAndTweets < ActiveRecord::Migration[5.2]
       t.string :name
       t.string :latitude
       t.string :longitude
-
-      t.timestamps
     end
 
     create_table :gauges_measures do |t|
       t.belongs_to :gauge, index: true
       t.datetime :measured_at
       t.float :measure
-
-      t.timestamps
     end
 
     create_table :tweets do |t|
@@ -25,9 +21,7 @@ class CreateGaugesAndTweets < ActiveRecord::Migration[5.2]
       t.datetime :posted_at
       t.string :latitude
       t.string :longitude
-      t.string :rain_related
-
-      t.timestamps
+      t.boolean :rain_related
     end
   end
 end
