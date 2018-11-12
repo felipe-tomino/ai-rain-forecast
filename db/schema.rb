@@ -11,35 +11,57 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20181101034412) do
+ActiveRecord::Schema.define(version: 20181108213208) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
-  create_table "gauges", force: :cascade do |t|
-    t.string "cod"
-    t.string "city"
-    t.string "state"
-    t.string "name"
-    t.string "latitude"
-    t.string "longitude"
+  create_table "ar_internal_metadata", primary_key: "key", force: :cascade do |t|
+    t.string   "value"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
-  create_table "gauges_measures", force: :cascade do |t|
-    t.integer  "gauge_id"
+  create_table "gauges", id: :bigserial, force: :cascade do |t|
+    t.string   "cod"
+    t.string   "city"
+    t.string   "state"
+    t.string   "name"
+    t.string   "latitude"
+    t.string   "longitude"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "gauges_measures", id: :bigserial, force: :cascade do |t|
+    t.integer  "gauge_id",    limit: 8
     t.datetime "measured_at"
     t.float    "measure"
+    t.datetime "created_at",            null: false
+    t.datetime "updated_at",            null: false
   end
 
   add_index "gauges_measures", ["gauge_id"], name: "index_gauges_measures_on_gauge_id", using: :btree
 
-  create_table "tweets", force: :cascade do |t|
+  create_table "infos_in_hours", force: :cascade do |t|
     t.integer  "gauge_id"
+    t.datetime "hour"
+    t.integer  "all_tweets"
+    t.integer  "related_tweets"
+    t.float    "gauge_measures"
+  end
+
+  add_index "infos_in_hours", ["gauge_id"], name: "index_infos_in_hours_on_gauge_id", using: :btree
+
+  create_table "tweets", id: :bigserial, force: :cascade do |t|
+    t.integer  "gauge_id",     limit: 8
     t.string   "id_str"
     t.datetime "posted_at"
     t.string   "latitude"
     t.string   "longitude"
-    t.boolean  "rain_related"
+    t.string   "rain_related"
+    t.datetime "created_at",             null: false
+    t.datetime "updated_at",             null: false
   end
 
   add_index "tweets", ["gauge_id"], name: "index_tweets_on_gauge_id", using: :btree
