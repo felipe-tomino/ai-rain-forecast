@@ -70,7 +70,23 @@
                                             <div class="col-12">
                                                 <div class="card">
                                                     <div class="card-block">
-                                                        <div id="sales-analytics2" style="height: 400px;"></div>
+                                                        <h3>Dados globais a cada hora</h3>
+                                                        <div id="global-info-in-hour" style="height: 400px;"></div>
+                                                        <h3>Dados globais a cada meia hora</h3>
+                                                        <div id="global-info-in-half-hour" style="height: 400px;"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="card">
+                                                    <div class="card-block">
+                                                        <select id="gauge-selector">
+                                                            <% @gauges.each do |gauge| %>
+                                                                <option value="<%= gauge.id %>" <%= (@active_gauge.id == gauge.id) ? 'selected="selected"' : '' %>><%= gauge.name %> (<%= gauge.cod %>)</option>
+                                                            <% end %>
+                                                        </select>
+                                                        <h3>Dados a cada hora por sensor</h3>
+                                                        <div id="individual-info-in-hour" style="height: 400px;"></div>
+                                                        <h3>Dados a cada meia hora por sensor</h3>
+                                                        <div id="individual-info-in-half-hour" style="height: 400px;"></div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -81,9 +97,21 @@
                                 <div id="styleSelector"> </div>
                                 <script>
                                   'use strict';
+                                  var chart1,chart2,chart3,chart4;
+                                  $('#gauge-selector').change(function() {
+                                    $.post("/dashboards", { active_gauge: this.value },
+                                        function(response) {
+                                            var result = $.parseJSON(response);
+                                            chart3.dataProvider = result[0];
+                                            chart4.dataProvider = result[0];
+                                            chart3.validateData();
+                                            chart4.validateData();
+                                    });
+                                  })
+
                                   $(document).ready(function() {
                                       // sale analytics start
-                                      var chart = AmCharts.makeChart( "sales-analytics2", {
+                                      chart1 = AmCharts.makeChart( "global-info-in-hour", {
                                           "type": "serial",
                                           "theme": "light",
                                           "legend": {
@@ -143,12 +171,214 @@
                                           "chartCursor": {
                                               "cursorPosition": "mouse"
                                           },
-                                          "categoryField": "hour",
+                                          "categoryField": "time",
                                           "categoryAxis": {
                                               "axisColor": "#DADADA",
                                               "minorGridEnabled": true
                                           },
-                                          "dataProvider": <%= @data %>
+                                          "dataProvider": <%= @global_infos_in_hour %>
+                                      } );
+                                      chart2 = AmCharts.makeChart( "global-info-in-half-hour", {
+                                          "type": "serial",
+                                          "theme": "light",
+                                          "legend": {
+                                              "useGraphSettings": true
+                                          },
+                                          "synchronizeGrid":true,
+                                          "valueAxes": [{
+                                              "id":"v1",
+                                              "axisColor": "#FF6600",
+                                              "axisThickness": 2,
+                                              "axisAlpha": 1,
+                                              "position": "left"
+                                          }, {
+                                              "id":"v2",
+                                              "axisColor": "#FCD202",
+                                              "axisThickness": 2,
+                                              "axisAlpha": 1,
+                                              "position": "right"
+                                          }, {
+                                              "id":"v3",
+                                              "axisColor": "#B0DE09",
+                                              "axisThickness": 2,
+                                              "gridAlpha": 0,
+                                              "offset": 50,
+                                              "axisAlpha": 1,
+                                              "position": "right"
+                                          }],
+                                          "graphs": [{
+                                              "valueAxis": "v1",
+                                              "lineColor": "#FF6600",
+                                              "bullet": "round",
+                                              "bulletBorderThickness": 1,
+                                              "hideBulletsCount": 30,
+                                              "title": "tweets",
+                                              "valueField": "all_tweets",
+                                      		"fillAlphas": 0
+                                          }, {
+                                              "valueAxis": "v2",
+                                              "lineColor": "#FCD202",
+                                              "bullet": "square",
+                                              "bulletBorderThickness": 1,
+                                              "hideBulletsCount": 30,
+                                              "title": "tweets relacionados",
+                                              "valueField": "related_tweets",
+                                      		"fillAlphas": 0
+                                          }, {
+                                              "valueAxis": "v3",
+                                              "lineColor": "#B0DE09",
+                                              "bullet": "triangleUp",
+                                              "bulletBorderThickness": 1,
+                                              "hideBulletsCount": 30,
+                                              "title": "precipitação",
+                                              "valueField": "gauge_measures",
+                                      		"fillAlphas": 0
+                                          }],
+                                          "chartScrollbar": {},
+                                          "chartCursor": {
+                                              "cursorPosition": "mouse"
+                                          },
+                                          "categoryField": "time",
+                                          "categoryAxis": {
+                                              "axisColor": "#DADADA",
+                                              "minorGridEnabled": true
+                                          },
+                                          "dataProvider": <%= @global_infos_in_half_hour %>
+                                      } );
+                                      // sale analytics start
+                                      chart3 = AmCharts.makeChart( "individual-info-in-hour", {
+                                          "type": "serial",
+                                          "theme": "light",
+                                          "legend": {
+                                              "useGraphSettings": true
+                                          },
+                                          "synchronizeGrid":true,
+                                          "valueAxes": [{
+                                              "id":"v1",
+                                              "axisColor": "#FF6600",
+                                              "axisThickness": 2,
+                                              "axisAlpha": 1,
+                                              "position": "left"
+                                          }, {
+                                              "id":"v2",
+                                              "axisColor": "#FCD202",
+                                              "axisThickness": 2,
+                                              "axisAlpha": 1,
+                                              "position": "right"
+                                          }, {
+                                              "id":"v3",
+                                              "axisColor": "#B0DE09",
+                                              "axisThickness": 2,
+                                              "gridAlpha": 0,
+                                              "offset": 50,
+                                              "axisAlpha": 1,
+                                              "position": "right"
+                                          }],
+                                          "graphs": [{
+                                              "valueAxis": "v1",
+                                              "lineColor": "#FF6600",
+                                              "bullet": "round",
+                                              "bulletBorderThickness": 1,
+                                              "hideBulletsCount": 30,
+                                              "title": "tweets",
+                                              "valueField": "all_tweets",
+                                      		"fillAlphas": 0
+                                          }, {
+                                              "valueAxis": "v2",
+                                              "lineColor": "#FCD202",
+                                              "bullet": "square",
+                                              "bulletBorderThickness": 1,
+                                              "hideBulletsCount": 30,
+                                              "title": "tweets relacionados",
+                                              "valueField": "related_tweets",
+                                      		"fillAlphas": 0
+                                          }, {
+                                              "valueAxis": "v3",
+                                              "lineColor": "#B0DE09",
+                                              "bullet": "triangleUp",
+                                              "bulletBorderThickness": 1,
+                                              "hideBulletsCount": 30,
+                                              "title": "precipitação",
+                                              "valueField": "gauge_measures",
+                                      		"fillAlphas": 0
+                                          }],
+                                          "chartScrollbar": {},
+                                          "chartCursor": {
+                                              "cursorPosition": "mouse"
+                                          },
+                                          "categoryField": "time",
+                                          "categoryAxis": {
+                                              "axisColor": "#DADADA",
+                                              "minorGridEnabled": true
+                                          },
+                                          "dataProvider": <%= @individual_infos_in_hour %>
+                                      } );
+                                      chart4 = AmCharts.makeChart( "individual-info-in-half-hour", {
+                                          "type": "serial",
+                                          "theme": "light",
+                                          "legend": {
+                                              "useGraphSettings": true
+                                          },
+                                          "synchronizeGrid":true,
+                                          "valueAxes": [{
+                                              "id":"v1",
+                                              "axisColor": "#FF6600",
+                                              "axisThickness": 2,
+                                              "axisAlpha": 1,
+                                              "position": "left"
+                                          }, {
+                                              "id":"v2",
+                                              "axisColor": "#FCD202",
+                                              "axisThickness": 2,
+                                              "axisAlpha": 1,
+                                              "position": "right"
+                                          }, {
+                                              "id":"v3",
+                                              "axisColor": "#B0DE09",
+                                              "axisThickness": 2,
+                                              "gridAlpha": 0,
+                                              "offset": 50,
+                                              "axisAlpha": 1,
+                                              "position": "right"
+                                          }],
+                                          "graphs": [{
+                                              "valueAxis": "v1",
+                                              "lineColor": "#FF6600",
+                                              "bullet": "round",
+                                              "bulletBorderThickness": 1,
+                                              "hideBulletsCount": 30,
+                                              "title": "tweets",
+                                              "valueField": "all_tweets",
+                                      		"fillAlphas": 0
+                                          }, {
+                                              "valueAxis": "v2",
+                                              "lineColor": "#FCD202",
+                                              "bullet": "square",
+                                              "bulletBorderThickness": 1,
+                                              "hideBulletsCount": 30,
+                                              "title": "tweets relacionados",
+                                              "valueField": "related_tweets",
+                                      		"fillAlphas": 0
+                                          }, {
+                                              "valueAxis": "v3",
+                                              "lineColor": "#B0DE09",
+                                              "bullet": "triangleUp",
+                                              "bulletBorderThickness": 1,
+                                              "hideBulletsCount": 30,
+                                              "title": "precipitação",
+                                              "valueField": "gauge_measures",
+                                      		"fillAlphas": 0
+                                          }],
+                                          "chartScrollbar": {},
+                                          "chartCursor": {
+                                              "cursorPosition": "mouse"
+                                          },
+                                          "categoryField": "time",
+                                          "categoryAxis": {
+                                              "axisColor": "#DADADA",
+                                              "minorGridEnabled": true
+                                          },
+                                          "dataProvider": <%= @individual_infos_in_half_hour %>
                                       } );
                                   });
 
@@ -227,5 +457,4 @@
     <script src="mega-able-lite/js/pcoded.min.js"></script>
     <script src="mega-able-lite/js/vertical-layout.min.js "></script>
     <!-- custom js -->
-    <script type="text/javascript" src="mega-able-lite/pages/dashboard/custom-dashboard.js"></script>
     <script type="text/javascript" src="mega-able-lite/js/script.js "></script>

@@ -1,3 +1,4 @@
+# este algoritmo cria um regressor random forest global (sem dividir por sensor)
 import psycopg2
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,6 +8,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
 from sklearn.metrics import explained_variance_score
+import pickle
 
 # connect to the PostgreSQL server
 conn = psycopg2.connect(host="localhost",database="tcc_development", user="postgres", password="postgres")
@@ -19,10 +21,11 @@ infos_in_half_hours = cur.fetchall()
 X = [[int(row[1].strftime("%Y")), int(row[1].strftime("%m")), int(row[1].strftime("%d")), int(row[1].strftime("%H")), int(row[1].strftime("%M")), row[2], row[3], row[4]] for row in infos_in_half_hours[:-1]]
 Y = [measure[4] for measure in infos_in_half_hours[1:]]
 
-X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.3, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
-regr = SVR(kernel='rbf', C=100, gamma=0.001, epsilon=0.2)
+regr = RandomForestRegressor(max_depth=5, random_state=42, n_estimators=50)
 regr.fit(X_train, y_train)
+pickle.dump(regr, open('./random_forest_regressors/global', 'wb'))
 
 y_pred = regr.predict(X_test)
 r2_score_lasso = r2_score(y_test, y_pred)
@@ -40,11 +43,13 @@ all_pred = regr.predict(X)
 all_corrects = [((Y[i] <= 2.5 and all_pred[i] <= 2.5) or (Y[i] > 2.5 and all_pred[i] > 2.5 and Y[i] <= 12.5 and all_pred[i] <= 12.5) or (Y[i] > 12.5 and all_pred[i] > 12.5 and Y[i] <= 25 and all_pred[i] <= 25) or (Y[i] > 25 and all_pred[i] > 25)) for i in range(len(all_pred))]
 all_corrects.count(True)/len(all_corrects)
 
-all_pred.tofile("allpred.txt", sep="\n")
+# all_pred.tofile("allpred.txt", sep="\n")
 
-with open('alltruth.txt', 'w') as f:
-    for item in Y:
-        f.write("%s\n" % item)
+all_data = [[y_test[i], y_pred[i]] for i in range(len(y_test))]
+
+with open('./results/global_RF.csv', 'w') as f:
+    for item in all_data:
+        f.write("%s,%s\n" % (item[0],item[1]))
 
 # end connection
 cur.close()
