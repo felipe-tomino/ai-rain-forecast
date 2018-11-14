@@ -20,7 +20,7 @@ class DashboardsController < ApplicationController
     #
     # @data = @data.to_json
 
-    @gauges = Gauge.all
+    @gauges = Gauge.all.order(:name)
     @active_gauge = (params[:active_gauge] != nil && params[:active_gauge].to_i > 0 && params[:active_gauge].to_i < 82) ? Gauge.find(params[:active_gauge]) : @gauges.find(28)
 
     # global tweets count, related tweets count and rainfall measure in hour
@@ -45,7 +45,7 @@ class DashboardsController < ApplicationController
   end
 
   post "/dashboards" do
-    @gauges = Gauge.all
+    @gauges = Gauge.all.order(:name)
     @active_gauge = (params[:active_gauge] != nil && params[:active_gauge].to_i > 0 && params[:active_gauge].to_i < 82) ? Gauge.find(params[:active_gauge]) : @gauges.find(28)
 
     # individual tweets count, related tweets count and rainfall measure in hour
