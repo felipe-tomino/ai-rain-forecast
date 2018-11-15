@@ -1,0 +1,269 @@
+<div id="map-body">
+
+  <div id="overlay">
+    <div class="row">
+      <div id="overlayheader" class="col-12">
+        <span class="float-left m-1 p-2 text-white">Clique na parte azul claro e arraste para mover</span>
+        <span class="float-right bg-primary m-1 p-2 rounded" onclick="off()" style="cursor: pointer">Fechar</span>
+      </div>
+      <div class="col-12">
+        <div id="gauge-name" class=""></div>
+        <div id="gauge-cod" class=""></div>
+        <div id="gauge-tweets" class=""></div>
+        <div id="gauge-related-tweets" class=""></div>
+        <div id="gauge-related-tweets-percentage" class=""></div>
+        <div id="gauge-precision" class=""></div>
+        <div id="gauge-recall" class=""></div>
+        <div id="gauge-measures" class=""></div>
+      </div>
+      <hr>
+      <div class="col-12">
+        <h2 class="p-0">Dados a cada meia hora do sensor</h2>
+        <div id="individual-info-in-half-hour" style="height: 400px;"></div>
+      </div>
+    </div>
+  </div>
+  <div id="map"></div>
+  <div id="legend"><h3>Legenda</h3></div>
+
+
+  <script src="mega-able-lite/pages/waves/js/waves.min.js"></script>
+  <!-- jquery slimscroll js -->
+  <script type="text/javascript" src="mega-able-lite/js/jquery-slimscroll/jquery.slimscroll.js "></script>
+  <!-- modernizr js -->
+  <script type="text/javascript" src="mega-able-lite/js/modernizr/modernizr.js "></script>
+  <!-- slimscroll js -->
+  <script type="text/javascript" src="mega-able-lite/js/SmoothScroll.js"></script>
+  <script src="mega-able-lite/js/jquery.mCustomScrollbar.concat.min.js "></script>
+  <!-- Chart js -->
+  <script type="text/javascript" src="mega-able-lite/js/chart.js/Chart.js"></script>
+  <!-- amchart js -->
+  <script src="https://www.amcharts.com/lib/3/amcharts.js"></script>
+  <script src="mega-able-lite/pages/widget/amchart/gauge.js"></script>
+  <script src="mega-able-lite/pages/widget/amchart/serial.js"></script>
+  <script src="mega-able-lite/pages/widget/amchart/light.js"></script>
+  <script src="mega-able-lite/pages/widget/amchart/pie.min.js"></script>
+  <script src="https://www.amcharts.com/lib/3/plugins/export/export.min.js"></script>
+  <script>
+    function on() {
+        document.getElementById("overlay").style.display = "block";
+    };
+
+    function off() {
+        document.getElementById("overlay").style.display = "none";
+        if (lastmarker != undefined) {
+          lastmarker.setIcon('/images/maps/red-dot.png');
+          lastmarker = undefined;
+        }
+    };
+
+    var individual_chart = AmCharts.makeChart( "individual-info-in-half-hour", {
+        "type": "serial",
+        "theme": "light",
+        "legend": {
+            "useGraphSettings": true
+        },
+        "synchronizeGrid":true,
+        "valueAxes": [{
+            "id":"v1",
+            "axisColor": "#FF6600",
+            "axisThickness": 2,
+            "axisAlpha": 1,
+            "position": "left"
+        }, {
+            "id":"v2",
+            "axisColor": "#FCD202",
+            "axisThickness": 2,
+            "axisAlpha": 1,
+            "position": "right"
+        }, {
+            "id":"v3",
+            "axisColor": "#B0DE09",
+            "axisThickness": 2,
+            "gridAlpha": 0,
+            "offset": 50,
+            "axisAlpha": 1,
+            "position": "right"
+        }],
+        "graphs": [{
+            "valueAxis": "v1",
+            "lineColor": "#FF6600",
+            "bullet": "round",
+            "bulletBorderThickness": 1,
+            "hideBulletsCount": 30,
+            "title": "tweets",
+            "valueField": "all_tweets",
+        "fillAlphas": 0
+        }, {
+            "valueAxis": "v2",
+            "lineColor": "#FCD202",
+            "bullet": "square",
+            "bulletBorderThickness": 1,
+            "hideBulletsCount": 30,
+            "title": "tweets relacionados",
+            "valueField": "related_tweets",
+        "fillAlphas": 0
+        }, {
+            "valueAxis": "v3",
+            "lineColor": "#B0DE09",
+            "bullet": "triangleUp",
+            "bulletBorderThickness": 1,
+            "hideBulletsCount": 30,
+            "title": "precipitação",
+            "valueField": "gauge_measures",
+        "fillAlphas": 0
+        }],
+        "chartScrollbar": {},
+        "chartCursor": {
+            "cursorPosition": "mouse"
+        },
+        "categoryField": "time",
+        "categoryAxis": {
+            "axisColor": "#DADADA",
+            "minorGridEnabled": true
+        },
+        "dataProvider": {}
+    } );
+
+    //Make the DIV element draggagle:
+    dragElement(document.getElementById("overlay"));
+
+    function dragElement(elmnt) {
+      var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+      if (document.getElementById(elmnt.id + "header")) {
+        /* if present, the header is where you move the DIV from:*/
+        document.getElementById(elmnt.id + "header").onmousedown = dragMouseDown;
+      } else {
+        /* otherwise, move the DIV from anywhere inside the DIV:*/
+        elmnt.onmousedown = dragMouseDown;
+      }
+
+      function dragMouseDown(e) {
+        e = e || window.event;
+        e.preventDefault();
+        // get the mouse cursor position at startup:
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        // call a function whenever the cursor moves:
+        document.onmousemove = elementDrag;
+      }
+
+      function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        // calculate the new cursor position:
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        // set the element's new position:
+        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+      }
+
+      function closeDragElement() {
+        /* stop moving when mouse button is released:*/
+        document.onmouseup = null;
+        document.onmousemove = null;
+      }
+    }
+
+    var lastmarker;
+    function initMap() {
+      var map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 11,
+        center: {lng: -46.62, lat: -23.58}
+      });
+
+      var infoWindow = new google.maps.InfoWindow();
+      <% @gauges.each do |gauge| %>
+        // var icon;
+        // if (titles[i][6] >= 0.01) {
+        //   icon = '/images/maps/red-dot.png'
+        // } else if (titles[i][6] >= 0.003 && titles[i][6] < 0.01) {
+        //   icon = '/images/maps/yellow-dot.png'
+        // } else if (titles[i][6] >= 0.001 && titles[i][6] < 0.003) {
+        //   icon = '/images/maps/green-dot.png'
+        // } else {
+        //   icon = '/images/maps/blue-dot.png'
+        // }
+
+        var data =  `<p><strong>Nome:</strong> <%= gauge.name %></p>` +
+                    `<p><strong>Código:</strong> <%= gauge.cod %></p>`
+
+        var marker = new google.maps.Marker({
+          position: {lng: <%= gauge.latitude.gsub(",",".").to_f %>, lat: <%= gauge.longitude.gsub(",",".").to_f %>},
+          map: map,
+          title: '<%= gauge.name %> (<%= gauge.cod %>)',
+          icon: '/images/maps/red-dot.png',
+          gauge_id: <%= gauge.id %>
+        });
+
+        (function (marker, data) {
+          google.maps.event.addListener(marker, "click", function (e) {
+            //Wrap the content inside an HTML DIV in order to set height and width of InfoWindow.
+            $.post("/map_individual_info", { active_gauge: this.gauge_id },
+                function(response) {
+                  if (lastmarker == undefined) {
+                    lastmarker = marker;
+                  } else {
+                    lastmarker.setIcon('/images/maps/red-dot.png');
+                    lastmarker = marker;
+                  }
+                  marker.setIcon('/images/maps/blue-dot.png');
+
+                  var result = $.parseJSON(response);
+                  individual_chart.dataProvider = result['dataProvider'];
+                  $('#gauge-name').html(`<strong>Nome do sensor:</strong> ${result['gauge_name']}`);
+                  $('#gauge-cod').html(`<strong>Código do sensor:</strong> ${result['gauge_cod']}`);
+                  $('#gauge-tweets').html(`<strong>Tweets atribuídos a este sensor:</strong> ${result['tweets_count']}`);
+                  $('#gauge-related-tweets').html(`<strong>Tweets relacionados atribuídos a este sensor:</strong> ${result['related_tweets_count']}`);
+                  $('#gauge-related-tweets-percentage').html(`<strong>% de Tweets relacionados atribuídos a este sensor:</strong> ${Math.round(result['related_tweets_count']/result['tweets_count'] * 10000000) / 100000}%`);
+                  $('#gauge-precision').html(`<strong>Precisão (Relev. da região / Total de tweets):</strong> ${Math.round(result['precision'] * 100000)/100000}`);
+                  $('#gauge-recall').html(`<strong>Recall (Relev. da região / Total de relevantes):</strong> ${Math.round(result['recall'] * 100000)/100000}`);
+                  $('#gauge-measures').html(`<strong>Acumulado total de chuva do sensor no mês inteiro:</strong> ${Math.round(result['total_rainfall'] * 1000)/1000} mm/mês`);
+                  individual_chart.validateData();
+
+                  on();
+            });
+          });
+        })(marker, data);
+      <% end %>
+
+      var icons = {
+        gauges: {
+          name: 'Sensores',
+          icon: '/images/maps/red-dot.png'
+        },
+        active_gauge: {
+          name: 'Sensor Ativo (gráficos)',
+          icon: '/images/maps/blue-dot.png'
+        }
+      };
+
+      var legend = document.getElementById('legend');
+      for (var key in icons) {
+        var type = icons[key];
+        var name = type.name;
+        var icon = type.icon;
+        var div = document.createElement('div');
+        div.innerHTML = '<img src="' + icon + '"> ' + name;
+        legend.appendChild(div);
+      }
+
+      map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(legend);
+    }
+  </script>
+  <script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBvx9NbA97wtfOI7c9WFlR150ov81jo81E&callback=initMap&libraries=visualization">
+  </script>
+
+  <!-- waves js -->
+
+  <!-- menu js -->
+  <script src="mega-able-lite/js/pcoded.min.js"></script>
+  <script src="mega-able-lite/js/vertical-layout.min.js "></script>
+  <!-- custom js -->
+  <script type="text/javascript" src="mega-able-lite/js/script.js "></script>
+</div>

@@ -1,24 +1,20 @@
 class DashboardsController < ApplicationController
-  # GET: /dashboards
-  get "/dashboards" do
+  # individual tweets count, related tweets count and rainfall measure in hour
+  def get_individual_infos_in_hour(gauge)
+    individual_infos_in_hour = InfosInHour.where(gauge_id: gauge.id)
+    individual_infos_in_hour = individual_infos_in_hour.map {|i| {time: "#{i.time.day} (#{i.time.hour}h#{i.time.min})", all_tweets: i.all_tweets, related_tweets: i.related_tweets, gauge_measures: i.gauge_measures}}
+    individual_infos_in_hour
+  end
+  # individual tweets count, related tweets count and rainfall measure in half hour
+  def get_individual_infos_in_half_hour(gauge)
+    individual_infos_in_half_hour = InfosInHalfHour.where(gauge_id: gauge.id)
+    individual_infos_in_half_hour = individual_infos_in_half_hour.map {|i| {time: "#{i.time.day} (#{i.time.hour}h#{i.time.min})", all_tweets: i.all_tweets, related_tweets: i.related_tweets, gauge_measures: i.gauge_measures}}
+    individual_infos_in_half_hour
+  end
+
+  # GET: /charts
+  get "/charts" do
     @title = "Gráficos"
-    # @data = []
-    #
-    # (1..31).to_a.each do |day|
-    #   (0..23).to_a.each do |hour|
-    #     infos = InfosInHour.where(time: Time.new(2016, 1, day, hour, 0, 0))
-    #
-    #     hour_hash = {}
-    #     hour_hash["hour"] = "#{day}(#{hour}h)"
-    #     hour_hash["all_tweets"] = infos.pluck(:all_tweets).sum
-    #     hour_hash["related_tweets"] = infos.pluck(:related_tweets).sum
-    #     hour_hash["gauge_measures"] = infos.pluck(:gauge_measures).sum
-    #
-    #     @data << hour_hash
-    #   end
-    # end
-    #
-    # @data = @data.to_json
 
     @gauges = Gauge.all.order(:name)
     @active_gauge = (params[:active_gauge] != nil && params[:active_gauge].to_i > 0 && params[:active_gauge].to_i < 82) ? Gauge.find(params[:active_gauge]) : @gauges.find(28)
@@ -32,31 +28,48 @@ class DashboardsController < ApplicationController
     @global_infos_in_half_hour = @global_infos_in_half_hour.map {|i| {time: "#{i.time.day} (#{i.time.hour}h#{i.time.min})", all_tweets: i.all_tweets, related_tweets: i.related_tweets, gauge_measures: i.gauge_measures}}
     @global_infos_in_half_hour = @global_infos_in_half_hour.to_json
 
-    # individual tweets count, related tweets count and rainfall measure in hour
-    @individual_infos_in_hour = InfosInHour.where(gauge_id: @active_gauge.id)
-    @individual_infos_in_hour = @individual_infos_in_hour.map {|i| {time: "#{i.time.day} (#{i.time.hour}h#{i.time.min})", all_tweets: i.all_tweets, related_tweets: i.related_tweets, gauge_measures: i.gauge_measures}}
-    @individual_infos_in_hour = @individual_infos_in_hour.to_json
-    # individual tweets count, related tweets count and rainfall measure in half hour
-    @individual_infos_in_half_hour = InfosInHalfHour.where(gauge_id: @active_gauge.id)
-    @individual_infos_in_half_hour = @individual_infos_in_half_hour.map {|i| {time: "#{i.time.day} (#{i.time.hour}h#{i.time.min})", all_tweets: i.all_tweets, related_tweets: i.related_tweets, gauge_measures: i.gauge_measures}}
-    @individual_infos_in_half_hour = @individual_infos_in_half_hour.to_json
+    @individual_infos_in_hour = get_individual_infos_in_hour(@active_gauge).to_json
+    @individual_infos_in_half_hour = get_individual_infos_in_half_hour(@active_gauge).to_json
 
     erb :"/dashboards/charts.html"
   end
 
-  post "/dashboards" do
+  get "/map" do
     @gauges = Gauge.all.order(:name)
-    @active_gauge = (params[:active_gauge] != nil && params[:active_gauge].to_i > 0 && params[:active_gauge].to_i < 82) ? Gauge.find(params[:active_gauge]) : @gauges.find(28)
 
-    # individual tweets count, related tweets count and rainfall measure in hour
-    @individual_infos_in_hour = InfosInHour.where(gauge_id: @active_gauge.id)
-    @individual_infos_in_hour = @individual_infos_in_hour.map {|i| {time: "#{i.time.day} (#{i.time.hour}h#{i.time.min})", all_tweets: i.all_tweets, related_tweets: i.related_tweets, gauge_measures: i.gauge_measures}}
-    # @individual_infos_in_hour = @individual_infos_in_hour.to_json
-    # individual tweets count, related tweets count and rainfall measure in half hour
-    @individual_infos_in_half_hour = InfosInHalfHour.where(gauge_id: @active_gauge.id)
-    @individual_infos_in_half_hour = @individual_infos_in_half_hour.map {|i| {time: "#{i.time.day} (#{i.time.hour}h#{i.time.min})", all_tweets: i.all_tweets, related_tweets: i.related_tweets, gauge_measures: i.gauge_measures}}
-    # @individual_infos_in_half_hour = @individual_infos_in_half_hour.to_json
+    erb :"/dashboards/map.html"
+  end
 
-    [@individual_infos_in_hour, @individual_infos_in_half_hour].to_json
+  post "/individual_chart" do
+    gauges = Gauge.all.order(:name)
+    active_gauge = (params[:active_gauge] != nil && params[:active_gauge].to_i > 0 && params[:active_gauge].to_i < 82) ? Gauge.find(params[:active_gauge]) : @gauges.find(28)
+
+    individual_infos_in_hour = get_individual_infos_in_hour(active_gauge)
+    individual_infos_in_half_hour = get_individual_infos_in_half_hour(active_gauge)
+
+    [individual_infos_in_hour, individual_infos_in_half_hour].to_json
+  end
+
+  post "/map_individual_info" do
+    gauges = Gauge.all.order(:name)
+    active_gauge = (params[:active_gauge] != nil && params[:active_gauge].to_i > 0 && params[:active_gauge].to_i < 82) ? Gauge.find(params[:active_gauge]) : @gauges.find(28)
+
+    individual_infos_in_half_hour = get_individual_infos_in_half_hour(active_gauge)
+
+    tweets_count = individual_infos_in_half_hour.map{ |n| n[:all_tweets]}.sum
+    related_tweets_count = individual_infos_in_half_hour.map{ |n| n[:related_tweets]}.sum
+    precision = related_tweets_count.to_f / InfosInHalfHour.all.pluck(:all_tweets).sum.to_f
+    recall = related_tweets_count.to_f / InfosInHalfHour.all.pluck(:related_tweets).sum.to_f
+    total_rainfall = individual_infos_in_half_hour.map{ |n| n[:gauge_measures]}.sum
+
+    { gauge_name: active_gauge.name,
+      gauge_cod: active_gauge.cod,
+      dataProvider: individual_infos_in_half_hour,
+      tweets_count: tweets_count,
+      related_tweets_count: related_tweets_count,
+      precision: precision,
+      recall: recall,
+      total_rainfall: total_rainfall
+    }.to_json
   end
 end

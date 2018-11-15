@@ -99,7 +99,7 @@
                                   'use strict';
                                   var chart1,chart2,chart3,chart4;
                                   $('#gauge-selector').change(function() {
-                                    $.post("/dashboards", { active_gauge: this.value },
+                                    $.post("/individual_chart", { active_gauge: this.value },
                                         function(response) {
                                             var result = $.parseJSON(response);
                                             chart3.dataProvider = result[0];
