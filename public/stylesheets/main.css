@@ -16,6 +16,22 @@
 #legend img {
   vertical-align: middle;
 }
+#link-to-charts {
+  position: fixed;
+  font-family: Arial, sans-serif;
+  background: #fff;
+  padding: 20px;
+  margin: 200px 10px;
+  border: 3px solid #000;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 175px;
+  z-index: 500;
+}
+#link-to-charts h3 {
+  margin-top: 0;
+}
 #overlay {
   position: fixed;
   display: none;
