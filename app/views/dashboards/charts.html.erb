@@ -1,395 +1,331 @@
-  <!-- Pre-loader start -->
-  <div class="theme-loader">
-      <div class="loader-track">
-          <div class="preloader-wrapper">
-              <div class="spinner-layer spinner-blue">
-                  <div class="circle-clipper left">
-                      <div class="circle"></div>
+<div class="pcoded-content">
+      <div class="pcoded-inner-content">
+          <!-- Main-body start -->
+          <div class="main-body">
+              <div class="page-wrapper">
+                  <!-- Page-body start -->
+                  <div class="page-body">
+                      <div class="row">
+                          <!--  sale analytics start -->
+                          <div class="col-12">
+                              <div class="card">
+                                  <div class="card-block">
+                                      <h3>Dados globais a cada hora</h3>
+                                      <div id="global-info-in-hour" style="height: 400px;"></div>
+                                      <h3>Dados globais a cada meia hora</h3>
+                                      <div id="global-info-in-half-hour" style="height: 400px;"></div>
+                                  </div>
+                              </div>
+                              <div class="card">
+                                  <div class="card-block">
+                                      <select id="gauge-selector">
+                                          <% @gauges.each do |gauge| %>
+                                              <option value="<%= gauge.id %>" <%= (@active_gauge.id == gauge.id) ? 'selected="selected"' : '' %>><%= gauge.name %> (<%= gauge.cod %>)</option>
+                                          <% end %>
+                                      </select>
+                                      <h3>Dados a cada hora por sensor</h3>
+                                      <div id="individual-info-in-hour" style="height: 400px;"></div>
+                                      <h3>Dados a cada meia hora por sensor</h3>
+                                      <div id="individual-info-in-half-hour" style="height: 400px;"></div>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
                   </div>
-                  <div class="gap-patch">
-                      <div class="circle"></div>
-                  </div>
-                  <div class="circle-clipper right">
-                      <div class="circle"></div>
-                  </div>
+                  <!-- Page-body end -->
               </div>
-              <div class="spinner-layer spinner-red">
-                  <div class="circle-clipper left">
-                      <div class="circle"></div>
-                  </div>
-                  <div class="gap-patch">
-                      <div class="circle"></div>
-                  </div>
-                  <div class="circle-clipper right">
-                      <div class="circle"></div>
-                  </div>
-              </div>
+              <div id="styleSelector"> </div>
+              <script>
+                'use strict';
+                var chart1,chart2,chart3,chart4;
+                $('#gauge-selector').change(function() {
+                  $.post("/individual_chart", { active_gauge: this.value },
+                      function(response) {
+                          var result = $.parseJSON(response);
+                          chart3.dataProvider = result[0];
+                          chart4.dataProvider = result[0];
+                          chart3.validateData();
+                          chart4.validateData();
+                  });
+                })
 
-              <div class="spinner-layer spinner-yellow">
-                  <div class="circle-clipper left">
-                      <div class="circle"></div>
-                  </div>
-                  <div class="gap-patch">
-                      <div class="circle"></div>
-                  </div>
-                  <div class="circle-clipper right">
-                      <div class="circle"></div>
-                  </div>
-              </div>
+                $(document).ready(function() {
+                    // sale analytics start
+                    chart1 = AmCharts.makeChart( "global-info-in-hour", {
+                        "type": "serial",
+                        "theme": "light",
+                        "legend": {
+                            "useGraphSettings": true
+                        },
+                        "synchronizeGrid":true,
+                        "valueAxes": [{
+                            "id":"v1",
+                            "axisColor": "#FF6600",
+                            "axisThickness": 2,
+                            "axisAlpha": 1,
+                            "position": "left"
+                        }, {
+                            "id":"v2",
+                            "axisColor": "#FCD202",
+                            "axisThickness": 2,
+                            "axisAlpha": 1,
+                            "position": "right"
+                        }, {
+                            "id":"v3",
+                            "axisColor": "#B0DE09",
+                            "axisThickness": 2,
+                            "gridAlpha": 0,
+                            "offset": 50,
+                            "axisAlpha": 1,
+                            "position": "right"
+                        }],
+                        "graphs": [{
+                            "valueAxis": "v1",
+                            "lineColor": "#FF6600",
+                            "bullet": "round",
+                            "bulletBorderThickness": 1,
+                            "hideBulletsCount": 30,
+                            "title": "tweets",
+                            "valueField": "all_tweets",
+                    		"fillAlphas": 0
+                        }, {
+                            "valueAxis": "v2",
+                            "lineColor": "#FCD202",
+                            "bullet": "square",
+                            "bulletBorderThickness": 1,
+                            "hideBulletsCount": 30,
+                            "title": "tweets relacionados",
+                            "valueField": "related_tweets",
+                    		"fillAlphas": 0
+                        }, {
+                            "valueAxis": "v3",
+                            "lineColor": "#B0DE09",
+                            "bullet": "triangleUp",
+                            "bulletBorderThickness": 1,
+                            "hideBulletsCount": 30,
+                            "title": "precipitação",
+                            "valueField": "gauge_measures",
+                    		"fillAlphas": 0
+                        }],
+                        "chartScrollbar": {},
+                        "chartCursor": {
+                            "cursorPosition": "mouse"
+                        },
+                        "categoryField": "time",
+                        "categoryAxis": {
+                            "axisColor": "#DADADA",
+                            "minorGridEnabled": true
+                        },
+                        "dataProvider": <%= @global_infos_in_hour %>
+                    } );
+                    chart2 = AmCharts.makeChart( "global-info-in-half-hour", {
+                        "type": "serial",
+                        "theme": "light",
+                        "legend": {
+                            "useGraphSettings": true
+                        },
+                        "synchronizeGrid":true,
+                        "valueAxes": [{
+                            "id":"v1",
+                            "axisColor": "#FF6600",
+                            "axisThickness": 2,
+                            "axisAlpha": 1,
+                            "position": "left"
+                        }, {
+                            "id":"v2",
+                            "axisColor": "#FCD202",
+                            "axisThickness": 2,
+                            "axisAlpha": 1,
+                            "position": "right"
+                        }, {
+                            "id":"v3",
+                            "axisColor": "#B0DE09",
+                            "axisThickness": 2,
+                            "gridAlpha": 0,
+                            "offset": 50,
+                            "axisAlpha": 1,
+                            "position": "right"
+                        }],
+                        "graphs": [{
+                            "valueAxis": "v1",
+                            "lineColor": "#FF6600",
+                            "bullet": "round",
+                            "bulletBorderThickness": 1,
+                            "hideBulletsCount": 30,
+                            "title": "tweets",
+                            "valueField": "all_tweets",
+                    		"fillAlphas": 0
+                        }, {
+                            "valueAxis": "v2",
+                            "lineColor": "#FCD202",
+                            "bullet": "square",
+                            "bulletBorderThickness": 1,
+                            "hideBulletsCount": 30,
+                            "title": "tweets relacionados",
+                            "valueField": "related_tweets",
+                    		"fillAlphas": 0
+                        }, {
+                            "valueAxis": "v3",
+                            "lineColor": "#B0DE09",
+                            "bullet": "triangleUp",
+                            "bulletBorderThickness": 1,
+                            "hideBulletsCount": 30,
+                            "title": "precipitação",
+                            "valueField": "gauge_measures",
+                    		"fillAlphas": 0
+                        }],
+                        "chartScrollbar": {},
+                        "chartCursor": {
+                            "cursorPosition": "mouse"
+                        },
+                        "categoryField": "time",
+                        "categoryAxis": {
+                            "axisColor": "#DADADA",
+                            "minorGridEnabled": true
+                        },
+                        "dataProvider": <%= @global_infos_in_half_hour %>
+                    } );
+                    // sale analytics start
+                    chart3 = AmCharts.makeChart( "individual-info-in-hour", {
+                        "type": "serial",
+                        "theme": "light",
+                        "legend": {
+                            "useGraphSettings": true
+                        },
+                        "synchronizeGrid":true,
+                        "valueAxes": [{
+                            "id":"v1",
+                            "axisColor": "#FF6600",
+                            "axisThickness": 2,
+                            "axisAlpha": 1,
+                            "position": "left"
+                        }, {
+                            "id":"v2",
+                            "axisColor": "#FCD202",
+                            "axisThickness": 2,
+                            "axisAlpha": 1,
+                            "position": "right"
+                        }, {
+                            "id":"v3",
+                            "axisColor": "#B0DE09",
+                            "axisThickness": 2,
+                            "gridAlpha": 0,
+                            "offset": 50,
+                            "axisAlpha": 1,
+                            "position": "right"
+                        }],
+                        "graphs": [{
+                            "valueAxis": "v1",
+                            "lineColor": "#FF6600",
+                            "bullet": "round",
+                            "bulletBorderThickness": 1,
+                            "hideBulletsCount": 30,
+                            "title": "tweets",
+                            "valueField": "all_tweets",
+                    		"fillAlphas": 0
+                        }, {
+                            "valueAxis": "v2",
+                            "lineColor": "#FCD202",
+                            "bullet": "square",
+                            "bulletBorderThickness": 1,
+                            "hideBulletsCount": 30,
+                            "title": "tweets relacionados",
+                            "valueField": "related_tweets",
+                    		"fillAlphas": 0
+                        }, {
+                            "valueAxis": "v3",
+                            "lineColor": "#B0DE09",
+                            "bullet": "triangleUp",
+                            "bulletBorderThickness": 1,
+                            "hideBulletsCount": 30,
+                            "title": "precipitação",
+                            "valueField": "gauge_measures",
+                    		"fillAlphas": 0
+                        }],
+                        "chartScrollbar": {},
+                        "chartCursor": {
+                            "cursorPosition": "mouse"
+                        },
+                        "categoryField": "time",
+                        "categoryAxis": {
+                            "axisColor": "#DADADA",
+                            "minorGridEnabled": true
+                        },
+                        "dataProvider": <%= @individual_infos_in_hour %>
+                    } );
+                    chart4 = AmCharts.makeChart( "individual-info-in-half-hour", {
+                        "type": "serial",
+                        "theme": "light",
+                        "legend": {
+                            "useGraphSettings": true
+                        },
+                        "synchronizeGrid":true,
+                        "valueAxes": [{
+                            "id":"v1",
+                            "axisColor": "#FF6600",
+                            "axisThickness": 2,
+                            "axisAlpha": 1,
+                            "position": "left"
+                        }, {
+                            "id":"v2",
+                            "axisColor": "#FCD202",
+                            "axisThickness": 2,
+                            "axisAlpha": 1,
+                            "position": "right"
+                        }, {
+                            "id":"v3",
+                            "axisColor": "#B0DE09",
+                            "axisThickness": 2,
+                            "gridAlpha": 0,
+                            "offset": 50,
+                            "axisAlpha": 1,
+                            "position": "right"
+                        }],
+                        "graphs": [{
+                            "valueAxis": "v1",
+                            "lineColor": "#FF6600",
+                            "bullet": "round",
+                            "bulletBorderThickness": 1,
+                            "hideBulletsCount": 30,
+                            "title": "tweets",
+                            "valueField": "all_tweets",
+                    		"fillAlphas": 0
+                        }, {
+                            "valueAxis": "v2",
+                            "lineColor": "#FCD202",
+                            "bullet": "square",
+                            "bulletBorderThickness": 1,
+                            "hideBulletsCount": 30,
+                            "title": "tweets relacionados",
+                            "valueField": "related_tweets",
+                    		"fillAlphas": 0
+                        }, {
+                            "valueAxis": "v3",
+                            "lineColor": "#B0DE09",
+                            "bullet": "triangleUp",
+                            "bulletBorderThickness": 1,
+                            "hideBulletsCount": 30,
+                            "title": "precipitação",
+                            "valueField": "gauge_measures",
+                    		"fillAlphas": 0
+                        }],
+                        "chartScrollbar": {},
+                        "chartCursor": {
+                            "cursorPosition": "mouse"
+                        },
+                        "categoryField": "time",
+                        "categoryAxis": {
+                            "axisColor": "#DADADA",
+                            "minorGridEnabled": true
+                        },
+                        "dataProvider": <%= @individual_infos_in_half_hour %>
+                    } );
+                });
 
-              <div class="spinner-layer spinner-green">
-                  <div class="circle-clipper left">
-                      <div class="circle"></div>
-                  </div>
-                  <div class="gap-patch">
-                      <div class="circle"></div>
-                  </div>
-                  <div class="circle-clipper right">
-                      <div class="circle"></div>
-                  </div>
-              </div>
+              </script>
           </div>
       </div>
   </div>
-  <!-- Pre-loader end -->
-  <div id="pcoded" class="pcoded">
-      <div class="pcoded-overlay-box"></div>
-      <div class="pcoded-container navbar-wrapper">
-          <div class="pcoded-main-container">
-              <div class="pcoded-wrapper">
-                  <div class="pcoded-content">
-                        <div class="pcoded-inner-content">
-                            <!-- Main-body start -->
-                            <div class="main-body">
-                                <div class="page-wrapper">
-                                    <!-- Page-body start -->
-                                    <div class="page-body">
-                                        <div class="row">
-                                            <!--  sale analytics start -->
-                                            <div class="col-12">
-                                                <div class="card">
-                                                    <div class="card-block">
-                                                        <a href="/map">&bull; LINK: Mapa de sensores com informações individuais</a>
-                                                        <h3>Dados globais a cada hora</h3>
-                                                        <div id="global-info-in-hour" style="height: 400px;"></div>
-                                                        <h3>Dados globais a cada meia hora</h3>
-                                                        <div id="global-info-in-half-hour" style="height: 400px;"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="card">
-                                                    <div class="card-block">
-                                                        <select id="gauge-selector">
-                                                            <% @gauges.each do |gauge| %>
-                                                                <option value="<%= gauge.id %>" <%= (@active_gauge.id == gauge.id) ? 'selected="selected"' : '' %>><%= gauge.name %> (<%= gauge.cod %>)</option>
-                                                            <% end %>
-                                                        </select>
-                                                        <h3>Dados a cada hora por sensor</h3>
-                                                        <div id="individual-info-in-hour" style="height: 400px;"></div>
-                                                        <h3>Dados a cada meia hora por sensor</h3>
-                                                        <div id="individual-info-in-half-hour" style="height: 400px;"></div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- Page-body end -->
-                                </div>
-                                <div id="styleSelector"> </div>
-                                <script>
-                                  'use strict';
-                                  var chart1,chart2,chart3,chart4;
-                                  $('#gauge-selector').change(function() {
-                                    $.post("/individual_chart", { active_gauge: this.value },
-                                        function(response) {
-                                            var result = $.parseJSON(response);
-                                            chart3.dataProvider = result[0];
-                                            chart4.dataProvider = result[0];
-                                            chart3.validateData();
-                                            chart4.validateData();
-                                    });
-                                  })
-
-                                  $(document).ready(function() {
-                                      // sale analytics start
-                                      chart1 = AmCharts.makeChart( "global-info-in-hour", {
-                                          "type": "serial",
-                                          "theme": "light",
-                                          "legend": {
-                                              "useGraphSettings": true
-                                          },
-                                          "synchronizeGrid":true,
-                                          "valueAxes": [{
-                                              "id":"v1",
-                                              "axisColor": "#FF6600",
-                                              "axisThickness": 2,
-                                              "axisAlpha": 1,
-                                              "position": "left"
-                                          }, {
-                                              "id":"v2",
-                                              "axisColor": "#FCD202",
-                                              "axisThickness": 2,
-                                              "axisAlpha": 1,
-                                              "position": "right"
-                                          }, {
-                                              "id":"v3",
-                                              "axisColor": "#B0DE09",
-                                              "axisThickness": 2,
-                                              "gridAlpha": 0,
-                                              "offset": 50,
-                                              "axisAlpha": 1,
-                                              "position": "right"
-                                          }],
-                                          "graphs": [{
-                                              "valueAxis": "v1",
-                                              "lineColor": "#FF6600",
-                                              "bullet": "round",
-                                              "bulletBorderThickness": 1,
-                                              "hideBulletsCount": 30,
-                                              "title": "tweets",
-                                              "valueField": "all_tweets",
-                                      		"fillAlphas": 0
-                                          }, {
-                                              "valueAxis": "v2",
-                                              "lineColor": "#FCD202",
-                                              "bullet": "square",
-                                              "bulletBorderThickness": 1,
-                                              "hideBulletsCount": 30,
-                                              "title": "tweets relacionados",
-                                              "valueField": "related_tweets",
-                                      		"fillAlphas": 0
-                                          }, {
-                                              "valueAxis": "v3",
-                                              "lineColor": "#B0DE09",
-                                              "bullet": "triangleUp",
-                                              "bulletBorderThickness": 1,
-                                              "hideBulletsCount": 30,
-                                              "title": "precipitação",
-                                              "valueField": "gauge_measures",
-                                      		"fillAlphas": 0
-                                          }],
-                                          "chartScrollbar": {},
-                                          "chartCursor": {
-                                              "cursorPosition": "mouse"
-                                          },
-                                          "categoryField": "time",
-                                          "categoryAxis": {
-                                              "axisColor": "#DADADA",
-                                              "minorGridEnabled": true
-                                          },
-                                          "dataProvider": <%= @global_infos_in_hour %>
-                                      } );
-                                      chart2 = AmCharts.makeChart( "global-info-in-half-hour", {
-                                          "type": "serial",
-                                          "theme": "light",
-                                          "legend": {
-                                              "useGraphSettings": true
-                                          },
-                                          "synchronizeGrid":true,
-                                          "valueAxes": [{
-                                              "id":"v1",
-                                              "axisColor": "#FF6600",
-                                              "axisThickness": 2,
-                                              "axisAlpha": 1,
-                                              "position": "left"
-                                          }, {
-                                              "id":"v2",
-                                              "axisColor": "#FCD202",
-                                              "axisThickness": 2,
-                                              "axisAlpha": 1,
-                                              "position": "right"
-                                          }, {
-                                              "id":"v3",
-                                              "axisColor": "#B0DE09",
-                                              "axisThickness": 2,
-                                              "gridAlpha": 0,
-                                              "offset": 50,
-                                              "axisAlpha": 1,
-                                              "position": "right"
-                                          }],
-                                          "graphs": [{
-                                              "valueAxis": "v1",
-                                              "lineColor": "#FF6600",
-                                              "bullet": "round",
-                                              "bulletBorderThickness": 1,
-                                              "hideBulletsCount": 30,
-                                              "title": "tweets",
-                                              "valueField": "all_tweets",
-                                      		"fillAlphas": 0
-                                          }, {
-                                              "valueAxis": "v2",
-                                              "lineColor": "#FCD202",
-                                              "bullet": "square",
-                                              "bulletBorderThickness": 1,
-                                              "hideBulletsCount": 30,
-                                              "title": "tweets relacionados",
-                                              "valueField": "related_tweets",
-                                      		"fillAlphas": 0
-                                          }, {
-                                              "valueAxis": "v3",
-                                              "lineColor": "#B0DE09",
-                                              "bullet": "triangleUp",
-                                              "bulletBorderThickness": 1,
-                                              "hideBulletsCount": 30,
-                                              "title": "precipitação",
-                                              "valueField": "gauge_measures",
-                                      		"fillAlphas": 0
-                                          }],
-                                          "chartScrollbar": {},
-                                          "chartCursor": {
-                                              "cursorPosition": "mouse"
-                                          },
-                                          "categoryField": "time",
-                                          "categoryAxis": {
-                                              "axisColor": "#DADADA",
-                                              "minorGridEnabled": true
-                                          },
-                                          "dataProvider": <%= @global_infos_in_half_hour %>
-                                      } );
-                                      // sale analytics start
-                                      chart3 = AmCharts.makeChart( "individual-info-in-hour", {
-                                          "type": "serial",
-                                          "theme": "light",
-                                          "legend": {
-                                              "useGraphSettings": true
-                                          },
-                                          "synchronizeGrid":true,
-                                          "valueAxes": [{
-                                              "id":"v1",
-                                              "axisColor": "#FF6600",
-                                              "axisThickness": 2,
-                                              "axisAlpha": 1,
-                                              "position": "left"
-                                          }, {
-                                              "id":"v2",
-                                              "axisColor": "#FCD202",
-                                              "axisThickness": 2,
-                                              "axisAlpha": 1,
-                                              "position": "right"
-                                          }, {
-                                              "id":"v3",
-                                              "axisColor": "#B0DE09",
-                                              "axisThickness": 2,
-                                              "gridAlpha": 0,
-                                              "offset": 50,
-                                              "axisAlpha": 1,
-                                              "position": "right"
-                                          }],
-                                          "graphs": [{
-                                              "valueAxis": "v1",
-                                              "lineColor": "#FF6600",
-                                              "bullet": "round",
-                                              "bulletBorderThickness": 1,
-                                              "hideBulletsCount": 30,
-                                              "title": "tweets",
-                                              "valueField": "all_tweets",
-                                      		"fillAlphas": 0
-                                          }, {
-                                              "valueAxis": "v2",
-                                              "lineColor": "#FCD202",
-                                              "bullet": "square",
-                                              "bulletBorderThickness": 1,
-                                              "hideBulletsCount": 30,
-                                              "title": "tweets relacionados",
-                                              "valueField": "related_tweets",
-                                      		"fillAlphas": 0
-                                          }, {
-                                              "valueAxis": "v3",
-                                              "lineColor": "#B0DE09",
-                                              "bullet": "triangleUp",
-                                              "bulletBorderThickness": 1,
-                                              "hideBulletsCount": 30,
-                                              "title": "precipitação",
-                                              "valueField": "gauge_measures",
-                                      		"fillAlphas": 0
-                                          }],
-                                          "chartScrollbar": {},
-                                          "chartCursor": {
-                                              "cursorPosition": "mouse"
-                                          },
-                                          "categoryField": "time",
-                                          "categoryAxis": {
-                                              "axisColor": "#DADADA",
-                                              "minorGridEnabled": true
-                                          },
-                                          "dataProvider": <%= @individual_infos_in_hour %>
-                                      } );
-                                      chart4 = AmCharts.makeChart( "individual-info-in-half-hour", {
-                                          "type": "serial",
-                                          "theme": "light",
-                                          "legend": {
-                                              "useGraphSettings": true
-                                          },
-                                          "synchronizeGrid":true,
-                                          "valueAxes": [{
-                                              "id":"v1",
-                                              "axisColor": "#FF6600",
-                                              "axisThickness": 2,
-                                              "axisAlpha": 1,
-                                              "position": "left"
-                                          }, {
-                                              "id":"v2",
-                                              "axisColor": "#FCD202",
-                                              "axisThickness": 2,
-                                              "axisAlpha": 1,
-                                              "position": "right"
-                                          }, {
-                                              "id":"v3",
-                                              "axisColor": "#B0DE09",
-                                              "axisThickness": 2,
-                                              "gridAlpha": 0,
-                                              "offset": 50,
-                                              "axisAlpha": 1,
-                                              "position": "right"
-                                          }],
-                                          "graphs": [{
-                                              "valueAxis": "v1",
-                                              "lineColor": "#FF6600",
-                                              "bullet": "round",
-                                              "bulletBorderThickness": 1,
-                                              "hideBulletsCount": 30,
-                                              "title": "tweets",
-                                              "valueField": "all_tweets",
-                                      		"fillAlphas": 0
-                                          }, {
-                                              "valueAxis": "v2",
-                                              "lineColor": "#FCD202",
-                                              "bullet": "square",
-                                              "bulletBorderThickness": 1,
-                                              "hideBulletsCount": 30,
-                                              "title": "tweets relacionados",
-                                              "valueField": "related_tweets",
-                                      		"fillAlphas": 0
-                                          }, {
-                                              "valueAxis": "v3",
-                                              "lineColor": "#B0DE09",
-                                              "bullet": "triangleUp",
-                                              "bulletBorderThickness": 1,
-                                              "hideBulletsCount": 30,
-                                              "title": "precipitação",
-                                              "valueField": "gauge_measures",
-                                      		"fillAlphas": 0
-                                          }],
-                                          "chartScrollbar": {},
-                                          "chartCursor": {
-                                              "cursorPosition": "mouse"
-                                          },
-                                          "categoryField": "time",
-                                          "categoryAxis": {
-                                              "axisColor": "#DADADA",
-                                              "minorGridEnabled": true
-                                          },
-                                          "dataProvider": <%= @individual_infos_in_half_hour %>
-                                      } );
-                                  });
-
-                                </script>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
     <!-- Warning Section Starts -->
     <!-- Older IE warning message -->
     <!--[if lt IE 10]>

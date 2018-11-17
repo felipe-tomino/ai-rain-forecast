@@ -1,4 +1,6 @@
 class DashboardsController < ApplicationController
+  require 'csv'
+
   # individual tweets count, related tweets count and rainfall measure in hour
   def get_individual_infos_in_hour(gauge)
     individual_infos_in_hour = InfosInHour.where(gauge_id: gauge.id)
@@ -14,6 +16,7 @@ class DashboardsController < ApplicationController
 
   # GET: /charts
   get "/charts" do
+    @page = "charts"
     @title = "Gráficos"
 
     @gauges = Gauge.all.order(:name)
@@ -35,9 +38,19 @@ class DashboardsController < ApplicationController
   end
 
   get "/map" do
+    @page = "map"
     @gauges = Gauge.all.order(:name)
 
     erb :"/dashboards/map.html"
+  end
+
+  get "/test-results" do
+    @page = "test-results"
+    @gauges = Gauge.all
+    @rf_results = CSV.read("./python/random_forest_regressors_cv/data/rf_scores.csv", { col_sep: ";" })
+    @svr_results = CSV.read("./python/SVR_cv/data/svr_scores.csv", { col_sep: ";" })
+
+    erb :"/dashboards/test_results.html"
   end
 
   post "/individual_chart" do

@@ -2,6 +2,7 @@
  * element that contains the map. */
 #map {
   height: 100%;
+  position: inherit !important;
 }
 #legend {
   font-family: Arial, sans-serif;
@@ -33,9 +34,9 @@
   margin-top: 0;
 }
 #overlay {
-  position: fixed;
+  position: relative;
   display: none;
-  width: 50%;
+  width: 70%;
   height: 50%;
   top: 0;
   left: 0;
@@ -51,7 +52,7 @@
   cursor: move;
 }
 /* Optional: Makes the sample page fill the window. */
-#map-body, html {
+#map-body {
   height: 100%;
   margin: 0;
   padding: 0;
