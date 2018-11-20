@@ -1,0 +1,233 @@
+<div class="pcoded-content">
+  <div class="pcoded-inner-content">
+    <!-- Main-body start -->
+    <div class="main-body">
+      <div class="page-wrapper">
+        <!-- Page-body start -->
+        <div class="page-body">
+          <div class="card p-2 m-0 w-100">
+            <div class="row">
+              <div class="col-md-1">
+                <span>Algoritmo</span>
+                <select id="clf" class="form-control">
+                  <option value="SVR_cv_notn">SVR (ñ norm)</option>
+                  <option value="SVR_cv">SVR</option>
+                  <option value="SVC_cv">SVC</option>
+                </select>
+              </div>
+              <div class="col-md-5">
+                <span>Atributos</span>
+                <select id="attribs" class="form-control">
+                  <option value="ymdhmtrrpr">Atributos 1: year,month,day,hour,minute,tweets,related,rainfall (mm/30min),precision,recall</option>
+                  <option value="hmtrrpr">Atributos 2: hour,minute,tweets,related,rainfall (mm/30min),precision,recall</option>
+                  <option value="trrpr">Atributos 3: tweets,related,rainfall (mm/30min),precision,recall</option>
+                  <option value="ymdhmtrr">Atributos 4: year,month,day,hour,minute,tweets,related,rainfall (mm/30min)</option>
+                  <option value="hmtrr">Atributos 5: hour,minute,tweets,related,rainfall (mm/30min)</option>
+                  <option value="trr">Atributos 6: tweets,related,rainfall (mm/30min)</option>
+                </select>
+              </div>
+              <div class="col-md-1">
+                <span>ID do sensor</span>
+                <select id="gauge-id" class="form-control">
+                  <% (1..81).to_a.each do |gauge_id| %>
+                    <option value="<%= gauge_id %>"><%= gauge_id %></option>
+                  <% end %>
+                </select>
+              </div>
+              <div class="col-md-1">
+                <span>ID do split</span>
+                <select id="split-id" class="form-control">
+                  <% (1..10).to_a.each do |split_id| %>
+                    <option value="<%= split_id %>"><%= split_id %></option>
+                  <% end %>
+                </select>
+              </div>
+              <div class="col-md-1">
+                <a id="dataset-btn" class="btn btn-inverse text-white h-100">Carregar<br>Dataset</a>
+              </div>
+            </div>
+          </div>
+          <div class="card p-2 m-0 w-100">
+            <div class="row">
+              <p class="col-md-12">
+                As tabelas ativas são referentes aos parâmetros: 
+                <strong>&bull; Algoritmo:</strong> <span id="current-clf">SVR (ñ norm)</span> 
+                <strong>&bull; Atributos:</strong> <span id="current-attribs">Atributos 1: year,month,day,hour,minute,tweets,related,rainfall (mm/30min),precision,recall</span> 
+                <strong>&bull; Sensor:</strong> <span id="current-gauge-id">1</span> 
+                <strong>&bull; Split:</strong> <span id="current-split-id">1</span>
+              </p>
+            </div>
+          </div>
+          <div class="row">
+            <ul class="nav nav-tabs tabs" role="tablist">
+              <li class="nav-item">
+                <a class="nav-link active" data-toggle="tab" href="#train-tab" role="tab">Treino</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#test-tab" role="tab">Teste</a>
+              </li>
+            </ul>
+            <div class="tab-content tabs card-block w-100">
+
+              <div id="train-tab" class="tab-pane border bg-white p-3 active" role="tabpanel">
+                <div class="table-responsive">
+                  <table id="train-table" class="table table-bordered table-striped">
+                  </table>
+                </div>
+              </div>
+
+              <div id="test-tab" class="tab-pane border bg-white p-3" role="tabpanel">
+                <div class="table-responsive">
+                  <table id="test-table" class="table table-bordered table-striped">
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <!-- Page-body end -->
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  $('#dataset-btn').click(function() {
+    var clf_value = $('#clf').val();
+    var attribs = $('#attribs').val();
+    var gauge_id = $('#gauge-id').val();
+    var split_id = $('#split-id').val();
+
+    $.post("/datasets", 
+      { clf: clf_value,
+        attr: attribs,
+        gauge: gauge_id,
+        split: split_id,
+      })
+      .done(function(response) {
+        var result = $.parseJSON(response);
+
+        // delete table rows
+        var train_table = document.getElementById('train-table');
+        train_table.removeChild(train_table.lastChild);
+        train_table.removeChild(train_table.lastChild);
+
+        var test_table = document.getElementById('test-table');
+        test_table.removeChild(test_table.lastChild);
+        test_table.removeChild(test_table.lastChild);
+
+        buildTable(result[0], 'train-table');
+        buildTable(result[1], 'test-table');
+
+        $('#current-clf').html($('#clf option:selected').text());
+        $('#current-attribs').html($('#attribs option:selected').text());
+        $('#current-gauge-id').html($('#gauge-id option:selected').text());
+        $('#current-split-id').html($('#split-id option:selected').text());
+      })
+      .fail(function(response) {
+        alert("Não encontramos o dataset pedido!");
+      });
+  })
+
+  function buildTable(tableArr, table_id) {
+    console.log(tableArr);
+    table_header = tableArr[0];
+    table_body = tableArr.slice(1, 1 + tableArr.length);
+
+    var table = document.getElementById(table_id);
+
+    var thead = document.createElement("thead");
+
+    var tbody = document.createElement("tbody");
+    var headRow = document.createElement("tr");
+
+    table_header.forEach(function(el) {
+      var th=document.createElement("th");
+      th.appendChild(document.createTextNode(el));
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    table_body.forEach(function(el) {
+      var tr = document.createElement("tr");
+      for (var o in el) {
+        var td = document.createElement("td");
+        td.appendChild(document.createTextNode(el[o]))
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+  }
+  window.onload=function() {
+    buildTable(<%= @train_dataset %>, 'train-table');
+    buildTable(<%= @test_dataset %>, 'test-table');
+  }
+</script>
+
+<!-- Warning Section Starts -->
+<!-- Older IE warning message -->
+<!--[if lt IE 10]>
+<div class="ie-warning">
+    <h1>Warning!!</h1>
+    <p>You are using an outdated version of Internet Explorer, please upgrade <br/>to any of the following web browsers to access this website.</p>
+    <div class="iew-container">
+        <ul class="iew-download">
+            <li>
+                <a href="http://www.google.com/chrome/">
+                    <img src="assets/images/browser/chrome.png" alt="Chrome">
+                    <div>Chrome</div>
+                </a>
+            </li>
+            <li>
+                <a href="https://www.mozilla.org/en-US/firefox/new/">
+                    <img src="assets/images/browser/firefox.png" alt="Firefox">
+                    <div>Firefox</div>
+                </a>
+            </li>
+            <li>
+                <a href="http://www.opera.com">
+                    <img src="assets/images/browser/opera.png" alt="Opera">
+                    <div>Opera</div>
+                </a>
+            </li>
+            <li>
+                <a href="https://www.apple.com/safari/">
+                    <img src="assets/images/browser/safari.png" alt="Safari">
+                    <div>Safari</div>
+                </a>
+            </li>
+            <li>
+                <a href="http://windows.microsoft.com/en-us/internet-explorer/download-ie">
+                    <img src="assets/images/browser/ie.png" alt="">
+                    <div>IE (9 & above)</div>
+                </a>
+            </li>
+        </ul>
+    </div>
+    <p>Sorry for the inconvenience!</p>
+</div>
+<![endif]-->
+<!-- Warning Section Ends -->
+
+<!-- waves js -->
+<script src="mega-able-lite/pages/waves/js/waves.min.js"></script>
+<!-- jquery slimscroll js -->
+<script type="text/javascript" src="mega-able-lite/js/jquery-slimscroll/jquery.slimscroll.js "></script>
+<!-- modernizr js -->
+<script type="text/javascript" src="mega-able-lite/js/modernizr/modernizr.js "></script>
+<!-- slimscroll js -->
+<script type="text/javascript" src="mega-able-lite/js/SmoothScroll.js"></script>
+<script src="mega-able-lite/js/jquery.mCustomScrollbar.concat.min.js "></script>
+<!-- Chart js -->
+<script type="text/javascript" src="mega-able-lite/js/chart.js/Chart.js"></script>
+<!-- amchart js -->
+<script src="https://www.amcharts.com/lib/3/amcharts.js"></script>
+<script src="mega-able-lite/pages/widget/amchart/serial.js"></script>
+<script src="https://www.amcharts.com/lib/3/plugins/export/export.min.js"></script>
+<!-- menu js -->
+<script src="mega-able-lite/js/pcoded.min.js"></script>
+<script src="mega-able-lite/js/vertical-layout.min.js "></script>
+<!-- Custom js -->
+<script type="text/javascript" src="mega-able-lite/js/script.js "></script>

@@ -1,5 +1,24 @@
 /* Always set the map height explicitly to define the size of the div
  * element that contains the map. */
+.table-responsive {
+  width: 100%;
+  height: 60vh;
+  overflow-x: auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid #DDD;
+}
+th {
+  background-color: #37474f;
+  color: #fff;
+  position: sticky;
+  top: 0;
+}
+.table-x-scrollbar {
+  width: 100%;
+  height: 20px;
+  overflow-x: auto;
+}
 #map {
   height: 100%;
   position: inherit !important;

@@ -3,19 +3,32 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import errno
-import pickle
+# import pickle
 
 from sklearn.svm import SVR
 from sklearn.model_selection import ShuffleSplit
 from sklearn.preprocessing import MaxAbsScaler
-from sklearn.metrics import r2_score
-from sklearn.metrics import explained_variance_score
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import f1_score
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
+from sklearn.metrics import mean_squared_error
 
 def split_list(list, indexes):
     result = []
     for index in indexes:
         result.append(list[index])
     return result
+
+def rain_type(value):
+    if (value < 2.5):
+        return 0
+    elif (value >= 2.5 and value <= 12.5):
+        return 1
+    elif (value > 12.5 and value <= 25):
+        return 2
+    elif (value > 25):
+        return 3
 
 # connect to the PostgreSQL server
 conn = psycopg2.connect(host="localhost",database="tcc_development", user="postgres", password="postgres")
@@ -25,68 +38,109 @@ cur = conn.cursor()
 cur.execute('SELECT id from gauges')
 gauges_ids = [id[0] for id in cur.fetchall()]
 
-result_path = "./SVR_cv/data/"
-if not os.path.exists(os.path.dirname(result_path)):
-    try:
-        os.makedirs(os.path.dirname(result_path))
-    except OSError as exc: # Guard against race condition
-        if exc.errno != errno.EEXIST:
-            raise
+attribs = [ ["year","month","day","hour","minute","tweets","related","rainfall (mm/30min)","precision","recall"],
+            ["hour","minute","tweets","related","rainfall (mm/30min)","precision","recall"],
+            ["tweets","related","rainfall (mm/30min)","precision","recall"],
+            ["year","month","day","hour","minute","tweets","related","rainfall (mm/30min)"],
+            ["hour","minute","tweets","related","rainfall (mm/30min)"],
+            ["tweets","related","rainfall (mm/30min)"]]
 
-agents_path = "./SVR_cv/agents/"
-if not os.path.exists(os.path.dirname(agents_path)):
-    try:
-        os.makedirs(os.path.dirname(agents_path))
-    except OSError as exc: # Guard against race condition
-        if exc.errno != errno.EEXIST:
-            raise
+results_paths = ["./SVR_cv/ymdhmtrrpr/",
+                "./SVR_cv/hmtrrpr/",
+                "./SVR_cv/trrpr/",
+                "./SVR_cv/ymdhmtrr/",
+                "./SVR_cv/hmtrr/",
+                "./SVR_cv/trr/"]
 
-rs = ShuffleSplit(n_splits=10, test_size=.1, random_state=42)
+for attribs_index in range(6):
+    if not os.path.exists(os.path.dirname(results_paths[attribs_index])):
+        try:
+            os.makedirs(os.path.dirname(results_paths[attribs_index]))
+        except OSError as exc: # Guard against race condition
+            if exc.errno != errno.EEXIST:
+                raise
 
-with open("./SVR_cv/data/svr_scores.csv", "w") as scores_file:
-    scores_file.write("Sensor;Split;R2 Score;Explained Variance Score;Mesma Classe\n")
-    for gauge_id in gauges_ids:
-        cur.execute('SELECT * from infos_in_half_hours where gauge_id = %s', [gauge_id])
-        infos_in_half_hours = cur.fetchall()
+    rs = ShuffleSplit(n_splits=10, test_size=.1, random_state=42)
 
-        # X = [[int(row[2].strftime("%Y")), int(row[2].strftime("%m")), int(row[2].strftime("%d")), int(row[2].strftime("%H")), int(row[2].strftime("%M")), row[3], row[4], row[5]] for row in infos_in_half_hours[:-1]]
-        X = [[int(row[2].strftime("%H")), int(row[2].strftime("%M")), row[3], row[4], row[5]] for row in infos_in_half_hours[:-1]]
-        transformer = MaxAbsScaler().fit(X)
-        X_normalized = transformer.transform(X)
-        Y = [measure[5] for measure in infos_in_half_hours[1:]]
+    with open("%ssvr_scores.csv" %(results_paths[attribs_index]), "w") as scores_file:
+        scores_file.write("Sensor;Split;Mean Squared Error;Accuracy;F1;Recall;Precision\n")
+        for gauge_id in gauges_ids:
+            cur.execute('SELECT * from infos_in_half_hours where gauge_id = %s', [gauge_id])
+            infos_in_half_hours = cur.fetchall()
 
-        regr = SVR(kernel='rbf', C=100, gamma=0.001)
+            if (results_paths[attribs_index] == results_paths[0]):
+                X = [[int(row[2].strftime("%Y")), int(row[2].strftime("%m")), int(row[2].strftime("%d")), int(row[2].strftime("%H")), int(row[2].strftime("%M")), row[3], row[4], row[5], (float(row[4])/241314.0), (float(row[4])/620.0)] for row in infos_in_half_hours[:-1]]
+            elif (results_paths[attribs_index] == results_paths[1]):
+                X = [[int(row[2].strftime("%H")), int(row[2].strftime("%M")), row[3], row[4], row[5], (float(row[4])/241314.0), (float(row[4])/620.0)] for row in infos_in_half_hours[:-1]]
+            elif (results_paths[attribs_index] == results_paths[2]):
+                X = [[row[3], row[4], row[5], (float(row[4])/241314.0), (float(row[4])/620.0)] for row in infos_in_half_hours[:-1]]
+            elif (results_paths[attribs_index] == results_paths[3]):
+                X = [[int(row[2].strftime("%Y")), int(row[2].strftime("%m")), int(row[2].strftime("%d")), int(row[2].strftime("%H")), int(row[2].strftime("%M")), row[3], row[4], row[5]] for row in infos_in_half_hours[:-1]]
+            elif (results_paths[attribs_index] == results_paths[4]):
+                X = [[int(row[2].strftime("%H")), int(row[2].strftime("%M")), row[3], row[4], row[5]] for row in infos_in_half_hours[:-1]]
+            elif (results_paths[attribs_index] == results_paths[5]):
+                X = [[row[3], row[4], row[5]] for row in infos_in_half_hours[:-1]]
 
-        split_index = 0
-        for train_index, test_index in rs.split(X):
-            X_train, X_test, y_train, y_test = split_list(X_normalized,train_index), split_list(X_normalized,test_index), split_list(Y,train_index), split_list(Y,test_index)
-            X_original_train, X_original_test = split_list(X,train_index), split_list(X,test_index)
+            transformer = MaxAbsScaler().fit(X)
+            X_normalized = transformer.transform(X)
+            Y = [measure[5] for measure in infos_in_half_hours[1:]]
 
-            pickle.dump(regr, open('./SVR_cv/agents/RF_gauge%s_split%s' %(str(gauge_id), split_index), 'wb'))
-            regr.fit(X_train, y_train)
+            regr = SVR(kernel='rbf', C=10, gamma=0.001)
 
-            y_pred = regr.predict(X_test)
+            split_index = 0
+            for train_index, test_index in rs.split(X):
+                X_train, X_test, y_train, y_test = split_list(X_normalized,train_index), split_list(X_normalized,test_index), split_list(Y,train_index), split_list(Y,test_index)
+                X_original_train, X_original_test = split_list(X,train_index), split_list(X,test_index)
 
-            r2_score_value = r2_score(y_test, y_pred)
-            variance_score = explained_variance_score(y_test, y_pred)
+                # pickle.dump(regr, open('./SVR_cv/agents/SVR_gauge%s_split%s' %(str(gauge_id), split_index), 'wb'))
+                regr.fit(X_train, y_train)
 
-            # http://alertario.rio.rj.gov.br/previsao-do-tempo/termosmet/
-            same_class = [((y_test[i] < 2.5 and y_pred[i] < 2.5) or (y_test[i] >= 2.5 and y_pred[i] >= 2.5 and y_test[i] <= 12.5 and y_pred[i] <= 12.5) or (y_test[i] > 12.5 and y_pred[i] > 12.5 and y_test[i] <= 25 and y_pred[i] <= 25) or (y_test[i] > 25 and y_pred[i] > 25)) for i in range(len(y_pred))]
-            corrects = same_class.count(True)/len(same_class)
+                y_pred = regr.predict(X_test)
 
-            split_index = split_index + 1
+                y_train_classified = [rain_type(measure) for measure in y_train]
+                y_test_classified = [rain_type(measure) for measure in y_test]
+                y_pred_classified = [rain_type(measure) for measure in y_pred]
 
-            with open("./SVR_cv/data/gauge%s_split%s_train.csv" %(str(gauge_id), split_index), "w") as f:
-                f.write("Hora;Dia;Total de Tweets;Total de Relacionados;Precipitação (mm/30min);Hora (normalizado);Dia (normalizado);Total de Tweets (normalizado);Total de Relacionados (normalizado);Precipitação (mm/30min) (normalizado); Precipitação para próxima meia hora (mm/30min)")
-                for i in range(len(X_train)):
-                    f.write("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n" %(X_original_train[i][0],X_original_train[i][1],X_original_train[i][2],X_original_train[i][3],X_original_train[i][4],X_train[i][0],X_train[i][1],X_train[i][2],X_train[i][3],X_train[i][4],y_train[i]))
+                # metrics
+                mse = mean_squared_error(y_test, y_pred)
+                accuracy = accuracy_score(y_test_classified, y_pred_classified)
+                f1 = f1_score(y_test_classified, y_pred_classified, average='micro')
+                recall = recall_score(y_test_classified, y_pred_classified, average='micro')
+                precision = precision_score(y_test_classified, y_pred_classified, average='micro')
 
-            with open("./SVR_cv/data/gauge%s_split%s_test.csv" %(str(gauge_id), split_index), "w") as f:
-                f.write("Hora;Dia;Total de Tweets;Total de Relacionados;Precipitação (mm/30min);Hora (normalizado);Dia (normalizado);Total de Tweets (normalizado);Total de Relacionados (normalizado);Precipitação (mm/30min) (normalizado);Precipitação para próxima meia hora (mm/30min);Precipitação Predita para próxima meia hora (mm/30min)")
-                for i in range(len(X_test)):
-                    f.write("%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n" %(X_original_test[i][0],X_original_test[i][1],X_original_test[i][2],X_original_test[i][3],X_original_test[i][4],X_test[i][0],X_test[i][1],X_test[i][2],X_test[i][3],X_test[i][4],y_test[i],y_pred[i]))
+                split_index = split_index + 1
 
-            scores_file.write("%s;%s;%s;%s;%s\n" %(gauge_id,split_index,r2_score_value,variance_score,corrects))
+                with open("%sgauge%s_split%s_train.csv" %(results_paths[attribs_index], str(gauge_id), split_index), "w") as f:
+                    # print header
+                    for attrib in attribs[attribs_index]:
+                        f.write("%s;" %(attrib))
+                    for attrib in attribs[attribs_index]:
+                        f.write("Normalized %s;" %(attrib))
+                    f.write("Next batch rainfall (mm/30min);Next batch rainfall class\n")
+                    # print data
+                    for i in range(len(X_train)):
+                        for column in range(len(X_train[i])):
+                            f.write("%s;" %(X_original_train[i][column]))
+                        for column in range(len(X_train[i])):
+                            f.write("%s;" %(X_train[i][column]))
+                        f.write("%s;%s\n" %(y_train[i], y_train_classified[i]))
+
+                with open("%sgauge%s_split%s_test.csv" %(results_paths[attribs_index], str(gauge_id), split_index), "w") as f:
+                    # print header
+                    for attrib in attribs[attribs_index]:
+                        f.write("%s;" %(attrib))
+                    for attrib in attribs[attribs_index]:
+                        f.write("Normalized %s;" %(attrib))
+                    f.write("Next batch rainfall (mm/30min);Predicted next batch rainfall (mm/30min);Next batch rainfall class;Predicted next batch rainfall class\n")
+                    # print data
+                    for i in range(len(X_test)):
+                        for column in range(len(X_test[i])):
+                            f.write("%s;" %(X_original_test[i][column]))
+                        for column in range(len(X_test[i])):
+                            f.write("%s;" %(X_test[i][column]))
+                        f.write("%s;%s;%s;%s\n" %(y_test[i],y_pred[i],y_test_classified[i],y_pred_classified[i]))
+
+                scores_file.write("%s;%s;%s;%s;%s;%s;%s\n" %(gauge_id, split_index, mse, accuracy, f1, recall, precision))
 
 # end connection
 cur.close()

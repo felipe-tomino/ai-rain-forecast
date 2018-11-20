@@ -133,10 +133,17 @@
                   <div class="pcoded-inner-navbar main-menu">
                       <div class="pcoded-navigation-label" data-i18n="nav.category.navigation">Dashboards</div>
                       <ul class="pcoded-item pcoded-left-item">
-                          <li <%= (@page == "test-results") ? 'class="active"' : '' %>>
-                              <a href="/test-results" class="waves-effect waves-dark">
+                          <li <%= (@page == "classification-results") ? 'class="active"' : '' %>>
+                              <a href="/classification-results" class="waves-effect waves-dark">
                                   <span class="pcoded-micon"><i class="ti-home"></i><b>D</b></span>
-                                  <span class="pcoded-mtext" >Regressões</span>
+                                  <span class="pcoded-mtext" >Classificadores</span>
+                                  <span class="pcoded-mcaret"></span>
+                              </a>
+                          </li>
+                          <li <%= (@page == "datasets") ? 'class="active"' : '' %>>
+                              <a href="/datasets" class="waves-effect waves-dark">
+                                  <span class="pcoded-micon"><i class="ti-home"></i><b>D</b></span>
+                                  <span class="pcoded-mtext" >Datasets (treino e teste)</span>
                                   <span class="pcoded-mcaret"></span>
                               </a>
                           </li>
